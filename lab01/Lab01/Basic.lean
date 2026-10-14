@@ -16,7 +16,7 @@
 /- Try to concatenate a list of strings with a list of natural numbers.
    What does Lean say? -/
 
--- #check ["a"] ++ [1]
+-- -- #check ["a"] ++ [1]
 
 /- The type Nat represents natural numbers. -/
 
@@ -135,14 +135,13 @@ def gcdF (fuel : Nat) : Nat → Nat → Option Nat
 
 def gcd : Nat → Nat → Option Nat := gcdF 1000
 
--- def gcdT (a b : Nat) (h : a < b) : Nat :=
---   match a, b with
---   | a, 0 => a
---   | 0, b => b
---   | a, b@(k + 1) =>
---     have hb : 0 < b := by omega
---     let h' : a % b < b := Nat.mod_lt a hb
---     gcdT (a % b) b h'
+def gcdT (a b : Nat) (h : a > b) : Nat :=
+  match a, b with
+  | a, 0 => a
+  | a, b@(k + 1) =>
+    have hb : 0 < b := by omega
+    let h' : a % b < b := Nat.mod_lt a hb
+    gcdT b (a % b) h'
 
 
 /- EXERCISE 8 (Optional) -/
