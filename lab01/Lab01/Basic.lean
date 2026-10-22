@@ -164,7 +164,7 @@ theorem collatz_ne_zero (n : Nat) [hz : NeZero n] : collatz n ≠ 0 := by
     omega
   · simp [h_dvd]
 
-partial def iterCollatz (n : Nat) [nz : NeZero n] : Nat :=
+partial def iterCollatz (n : Nat) [NeZero n] : Nat :=
   if n == 1 then 0 else 1 + @iterCollatz (collatz n) (NeZero.mk <| collatz_ne_zero n)
 
 #eval iterCollatz 27
@@ -188,8 +188,9 @@ def squareL : List Nat → List Nat
   | [] => []
   | x :: xs => x^2 :: squareL xs
 
-def sumL2 (l : List Nat) : Option Nat
-  := l.foldl (fun acc x => acc.map (· + x)) none
+def sumL2 (l : List Nat) : Option Nat :=
+  l.foldl (fun acc x => acc.map (· + x)) none
+
 def squareL2 (l : List Nat) : List Nat := l.map (·^2)
 
 /- EXERCISE 10

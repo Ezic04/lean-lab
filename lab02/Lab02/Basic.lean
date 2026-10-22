@@ -58,7 +58,7 @@ abbrev Vect := flip Vec
 
 -- Uncomment after implementing:
 #eval map (fun x : Int => x + 10) (cons 1 (cons 2 nil))
--- Expected: Cons 11 (Cons 12 Nil)
+-- Expected: cons 11 (cons 12 nil)
 
 def foldl : Vec α n → (α → β → β) → β → β
   | nil, _, b => b
@@ -108,11 +108,11 @@ def scalarProduct (v₁ v₂ : Vect n Int) : Int :=
 -/
 def reverse : Vect n α → Vect n α
   | nil => nil
-  | cons (m := m) x xs => Nat.add_comm 1 m ▸ append xs {x}
+  | cons (m := m) x xs => Nat.add_comm 1 m ▸ append (reverse xs) {x}
 
 -- Uncomment after implementing:
 #eval reverse (cons 1 (cons 2 (cons 3 nil)))
--- Expected: Cons 3 (Cons 2 (Cons 1 Nil))
+-- Expected: cons 3 (cons 2 (cons 1 nil))
 
 /- EXERCISE 4: matrix multiplication over Int
    Write BOTH the type and implementation of matrixMultiplication.
@@ -120,18 +120,22 @@ def reverse : Vect n α → Vect n α
    the second matrix have, and what dimensions will the result have?
    HINT: You can reuse the vector functions defined above.
 -/
--- def matrixMultiplication ... := ...
+-- def matrixMultiplication : Matrix Int m n → Matrix Int m n → Matrix Int m k
+def matrixMultiplication (a : Matrix Int m n) (b : Matrix Int n k) : Matrix Int m k :=
+  let b' := transpose b
+  a.map (fun a => b'.map (scalarProduct a))
+
 
 -- Tests for matrix multiplication: uncomment after implementing.
--- def testMatrixA : Matrix Int 2 3 :=
---   Cons (Cons 1 (Cons 2 (Cons 3 Nil)))
---     (Cons (Cons 4 (Cons 5 (Cons 6 Nil))) Nil)
--- def testMatrixB : Matrix Int 3 2 :=
---   Cons (Cons 7 (Cons 8 Nil))
---     (Cons (Cons 9 (Cons 10 Nil))
---       (Cons (Cons 11 (Cons 12 Nil)) Nil))
--- #eval matrixMultiplication testMatrixA testMatrixB
--- Expected: [[58, 64], [139, 154]], represented using Cons and Nil.
+def testMatrixA : Matrix Int 2 3 :=
+  cons (cons 1 (cons 2 (cons 3 nil)))
+    (cons (cons 4 (cons 5 (cons 6 nil))) nil)
+def testMatrixB : Matrix Int 3 2 :=
+  cons (cons 7 (cons 8 nil))
+    (cons (cons 9 (cons 10 nil))
+      (cons (cons 11 (cons 12 nil)) nil))
+#eval matrixMultiplication testMatrixA testMatrixB
+-- Expected: [[58, 64], [139, 154]], represented using cons and nil.
 
 /- EXERCISE 5: finite indices
    In namespace Vec, define your own inductive type Fin k representing natural
@@ -140,17 +144,50 @@ def reverse : Vect n α → Vect n α
    (Remember, we are still in the namespace Vec. Lean has a predefined type Fin k.)
  -/
 
--- inductive Fin : Nat → Type where
---   ...
+inductive Fin : Nat → Type where
+  | zero : Fin (n + 1)
+  | succ (i : Fin n) : Fin (n + 1)
 
 -- After defining your own Fin above, uncomment and implement:
 
--- def getElem (n : Fin k) (v : Vec a k) : a := sorry
+def getElem : Fin k → Vec a k → a
+  | Fin.zero, cons x _ => x
+  | Fin.succ i, cons _ xs => xs.getElem i
 
--- #eval getElem Fin.zero (Cons 10 (Cons 20 (Cons 30 Nil))) -- 10
--- #eval getElem (Fin.succ Fin.zero) (Cons 10 (Cons 20 (Cons 30 Nil))) -- 20
+#eval getElem Fin.zero (cons 10 (cons 20 (cons 30 nil))) -- 10
+#eval getElem (Fin.succ Fin.zero) (cons 10 (cons 20 (cons 30 nil))) -- 20
 
 end Vec
+
+structure SelfOrSucc (n : Nat) (α : Nat → Type) where
+  rest : Fin 2
+  val : α (n + rest)
+
+namespace SelfOrSucc
+
+def mkSelf (a : α n) : SelfOrSucc n α := ⟨0, a⟩
+def mkSucc (a : α (n + 1)) : SelfOrSucc n α := ⟨1, a⟩
+
+def isSucc  (x : SelfOrSucc n α) : Bool := x.rest == 1
+
+-- theorem succ_res_one (x : SelfOrSucc n α) (h : x.isSucc = true) : x.rest.toNat = 1 := eq_of_beq h
+
+theorem succ_res_one (x : SelfOrSucc n α) (h : x.isSucc = b) : x.rest.toNat = b.toNat := by
+  rw [isSucc] at h
+  cases b
+  · simp
+  -- · simp [ne_of_beq_false h]
+    sorry
+  · simp [eq_of_beq h]
+
+
+
+-- def NumOrSucc.map_inc (x : SelfOrSucc n α) (f : ∀ {m}, α m → α (m + 1)) : SelfOrSucc (n + 1) α :=
+--   NumOrSucc.mk x.is_succ (Nat.add_right_comm n x.is_succ.toNat 1 ▸ f x.val)
+-- abbrev mkGrow (t : α (n + 1)) : SelfOrSucc n α := NumOrSucc.mk 1 t
+-- abbrev mkSame (t : α n) : SelfOrSucc n α := NumOrSucc.mk 0 t
+
+end SelfOrSucc
 
 /- EXERCISE 6: AVL insertion
    Constructors enforce height balance, but do not enforce search order.
@@ -158,19 +195,45 @@ end Vec
    Use compare to preserve search order for an input search tree, and leave
    equal elements unchanged. Identify the hard cases that require rotations
    and leave those branches as sorry. -/
-inductive AVL (a : Type) : Nat → Type where
-  | empty : AVL a 0
-  | balanced (elem : a) (l : AVL a h) (r : AVL a h) : AVL a (h + 1)
-  | leftHeavy (elem : a) (l : AVL a (h + 1)) (r : AVL a h) : AVL a (h + 2)
-  | rightHeavy (elem : a) (l : AVL a h) (r : AVL a (h + 1)) : AVL a (h + 2)
+inductive AVL (α : Type) : Nat → Type where
+  | empty : AVL α 0
+  | balanced (elem : α) (l : AVL α h) (r : AVL α h) : AVL α (h + 1)
+  | leftHeavy (elem : α) (l : AVL α (h + 1)) (r : AVL α h) : AVL α (h + 2)
+  | rightHeavy (elem : α) (l : AVL α h) (r : AVL α (h + 1)) : AVL α (h + 2)
 
 namespace AVL
 
-inductive insertResult (a : Type) (n : Nat) : Type where
-  | sameHeight : AVL a n → insertResult a n
-  | increasedHeight : AVL a (n + 1) → insertResult a n
+-- inductive InsertResult (a : Type) (n : Nat) : Type where
+--   | sameHeight : AVL a n → InsertResult a n
+--   | increasedHeight : AVL a (n + 1) → InsertResult a n
 
-def insert [Ord a] (t : AVL a n) (elem : a) : insertResult a n := sorry
+
+def insert [Ord α] (t : AVL α h) (x : α) : SelfOrSucc h (AVL α) :=
+  match t with
+  | empty => .mkSucc (balanced x empty empty)
+  | t@(balanced e l r) =>
+    match compare x e with
+    | .eq => .mkSelf t
+    | .lt =>
+      let lu := insert l x
+      if h : lu.isSucc then
+        let lh := leftHeavy e (SelfOrSucc.succ_res_one lu h ▸ lu.val) r
+        sorry
+      else balanced e lu.val r
+    | .gt => sorry
+  | t@(leftHeavy e l r) =>
+    let lc := .mkSelf t
+    let rc := .mkSelf t
+    match_ord e t lc rc
+  | t@(rightHeavy e l r) =>
+    let lc := .mkSelf t
+    let rc := .mkSelf t
+    match_ord e t lc rc
+  match_ord {k} (e : a) (t : AVL a k) (lc rc : SelfOrSucc k (AVL a)) : SelfOrSucc k (AVL a) :=
+    match compare x e with
+    | .eq => .mkSelf t
+    | .lt => lc
+    | .gt => rc
 
 /- EXERCISE 7 (*) (optional): AVL rotations
    Extend your implementation of insert by implementing the rotation parts
