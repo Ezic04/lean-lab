@@ -33,11 +33,12 @@ example (x : Nat) : x - 1 ≤ x :=
   | Nat.zero => Nat.zero_le x
   | Nat.succ n =>
     let m := n.succ
+    have hp : x - 1 = m := hp
     have : 1 ≤ x :=
       have : 1 ≤ m := Nat.succ_le_succ (Nat.zero_le n)
-      have : n.succ ≤ x := hp ▸ (Nat.sub_le x 1)
+      have : m ≤ x := hp ▸ (Nat.sub_le x 1)
       Nat.le_trans ‹1 ≤ m› ‹m ≤ x›
-    have : n.succ + 1 = x := hp ▸ Nat.sub_add_cancel ‹1 ≤ x›
+    have : m + 1 = x := hp ▸ Nat.sub_add_cancel ‹1 ≤ x›
     Nat.le.intro ‹m + 1 = x›
 
 example (x y : Nat) : x = y + 1 → x + 1 = y + 2 := congrArg Nat.succ
@@ -91,11 +92,18 @@ variable (α : Type) (p q : α → Prop) (r : Prop)
 example : (∀ x, p x ∧ q x) ↔ (∀ x, p x) ∧ (∀ x, q x) := by
   constructor
   · intro hpq
-    exact ⟨fun x => (hpq x).left, fun x => (hpq x).right⟩
-  · sorry
+    exact ⟨(And.left <| hpq ·), (And.right <| hpq ·)⟩
+  · intro hpq x
+    exact ⟨hpq.left x, hpq.right x⟩
 
-example : (∀ x, p x → q x) → (∀ x, p x) → (∀ x, q x) := by sorry
-example : (∀ x, p x) ∨ (∀ x, q x) → ∀ x, p x ∨ q x := by sorry
+example : (∀ x, p x → q x) → (∀ x, p x) → (∀ x, q x) := by
+  intro hpq hp x
+  exact hpq x (hp x)
+
+example : (∀ x, p x) ∨ (∀ x, q x) → ∀ x, p x ∨ q x := by
+  intro hpq x
+  exact hpq.imp (· x) (· x)
+
 example : α → ((∀ _x : α, r) ↔ r) := by sorry
 example : (∀ x, p x ∨ r) ↔ (∀ x, p x) ∨ r := by sorry
 example : (∀ x, r → p x) ↔ (r → ∀ x, p x) := by sorry
