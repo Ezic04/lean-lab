@@ -104,7 +104,32 @@ example : (∀ x, p x) ∨ (∀ x, q x) → ∀ x, p x ∨ q x := by
   intro hpq x
   exact hpq.imp (· x) (· x)
 
-example : α → ((∀ _x : α, r) ↔ r) := by sorry
-example : (∀ x, p x ∨ r) ↔ (∀ x, p x) ∨ r := by sorry
-example : (∀ x, r → p x) ↔ (r → ∀ x, p x) := by sorry
+example : α → ((∀ _x : α, r) ↔ r) := by
+  intro x
+  constructor
+  · intro hr
+    exact hr x
+  · intro hr x
+    exact hr
+
+example : (∀ x, p x ∨ r) ↔ (∀ x, p x) ∨ r := by
+  constructor
+  · intro hpr
+    rcases Classical.em r with hr | hnr
+    · exact Or.inr hr
+    · left
+      intro x
+      exact match hpr x with
+        | Or.inl hp => hp
+        | Or.inr hr => absurd hr hnr
+  · intro hpr x
+    exact hpr.imp (· x) id
+
+example : (∀ x, r → p x) ↔ (r → ∀ x, p x) := by
+  constructor
+  · intro hp hr x
+    exact hp x hr
+  · intro hrp x r
+    exact hrp r x
+
 end
