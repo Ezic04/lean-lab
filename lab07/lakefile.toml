@@ -1,0 +1,15 @@
+name = "lab07"
+version = "0.1.0"
+defaultTargets = ["lab07"]
+
+[[lean_lib]]
+name = "Lab07"
+
+[[lean_exe]]
+name = "lab07"
+root = "Main"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "master"
