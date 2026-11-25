@@ -1,0 +1,51 @@
+name = "lean-lab"
+version = "0.1.0"
+defaultTargets = [
+  "Lab01", 
+  "lab01_exe",
+  "Lab02",
+  "Lab03",
+  "Lab04",
+  "Lab05",
+  "Lab06",
+  "Lab07",
+]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.36.0"
+
+[[lean_lib]]
+name = "Lab01"
+srcDir = "lab01"
+
+[[lean_lib]]
+name = "Lab02"
+srcDir = "lab02"
+
+[[lean_lib]]
+name = "Lab03"
+srcDir = "lab03"
+
+[[lean_lib]]
+name = "Lab04"
+srcDir = "lab04"
+
+[[lean_lib]]
+name = "Lab05"
+srcDir = "lab05"
+
+[[lean_lib]]
+name = "Lab06"
+srcDir = "lab06"
+
+[[lean_lib]]
+name = "Lab07"
+srcDir = "lab07"
+
+[[lean_exe]]
+name = "lab01_exe"
+srcDir = "lab01"
+root = "Main"
+
